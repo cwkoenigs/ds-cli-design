@@ -1,6 +1,6 @@
 [project]
 name = "ds-cli-design"
-version = "1.0.0"
+version = "1.1.0"
 description = "The ds-next terminal design system as a project: the full design export, a Python library (Rich + prompt_toolkit), and agent skills"
 requires-python = ">=3.10"
 dependencies = ["rich>=13", "prompt_toolkit>=3.0"]
