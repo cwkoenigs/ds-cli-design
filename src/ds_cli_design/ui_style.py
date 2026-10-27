@@ -2,9 +2,11 @@
 
 The values are the design system's tokens (design-system/tokens.json); `make check` fails if this
 file and tokens.json disagree. Everything a terminal prints goes through these helpers so roles and
-columns stay consistent. Origin: ds-next's ui_style.py from the v1 export; one change, banner() takes
-the product name; agent_lines prints its text (the export's copy printed None:
-Text.rstrip() works in place; ds-next's live copy already had the fix).
+columns stay consistent. Origin: ds-next's ui_style.py from the v1 export, then ds-next's live copy, which
+ds-next now imports from here: banner() takes the product name and the art, and draws the brighter
+banner the owner chose (a visible edge, a bright title); prompt_box, PromptEcho and session_rule draw
+Cortex Code's rounded box with the session tag; agent_lines prints its text (the export's copy printed
+None: Text.rstrip() works in place).
 """
 from __future__ import annotations
 
@@ -278,17 +280,18 @@ def frame(title: Text | str, rows: list[Text | None], *, kind: str = "input", ke
 
 
 def banner(version: str, facts: list[tuple[str, str]], hints: list[str], path: str, tagline: str,
-           w: int = DESIGN_WIDTH, name: str = "ds-next") -> list[Text]:
-    """Two-pane frame shown once: word-mark left, facts right, path on a footer row."""
+           w: int = DESIGN_WIDTH, art: list[Text] | None = None, name: str = "ds-next") -> list[Text]:
+    """Two-pane frame shown once: the mark and word-mark left, facts right, path on a footer row. The one
+    decorative frame: a visible edge and a bright title, as Cortex Code draws it."""
     li = 30
     ri = w - 3 - li
-    title = Text.assemble((name, "brand bold"), (f" {version}", "dim"))
-    e = "dim"
+    title = Text.assemble((name, "strong"), (f" {version}", "accent"))
+    e = "muted"
     out = [Text.assemble(("┌─ ", e), title, (" " + "─" * (li - 3 - title.cell_len) + "┬" + "─" * ri + "┐", e))]
-    left: list[Text] = mascot_lines() + [
-        Text(), Text.assemble("  ", (name, "bold"), (" · " + tagline, "muted"))]
-    right: list[Text] = [Text()] + [Text.assemble(("  " + f"{k:<{LABEL_W}} ", "dim"), v) for k, v in facts] + [Text()]
-    right += [Text("  " + h, style="dim") for h in hints]
+    left: list[Text] = [*(art if art is not None else mascot_lines()), Text(),
+                        Text.assemble("  ", (name, "strong")), Text("  " + tagline, style="accent")]
+    right: list[Text] = [Text()] + [Text.assemble(("  " + f"{k:<{LABEL_W}} ", "accent"), v) for k, v in facts] + [Text()]
+    right += [Text("  " + h, style="muted") for h in hints]
     for i in range(max(len(left), len(right))):
         l_ = (left[i] if i < len(left) else Text()).copy()
         r_ = (right[i] if i < len(right) else Text()).copy()
@@ -300,6 +303,34 @@ def banner(version: str, facts: list[tuple[str, str]], hints: list[str], path: s
     out.append(Text.assemble(("│", e), " " * lp, (path, "muted"), " " * (w - 2 - lp - len(path)), ("│", e)))
     out.append(Text("└" + "─" * (w - 2) + "┘", style=e))
     return out
+
+
+# ── the prompt box: Cortex Code's, rounded, the session tag in its top rule ──
+def prompt_box(tag: str, text: str, w: int) -> list[Text]:
+    """The prompt frame, three rows at width w: rounded, the session tag on the band at the right of
+    the top rule. A live prompt draws the same rows; this is the static print once a line is accepted."""
+    t = f" {tag} "
+    inner = w - 2
+    body = f"{G.prompt} {text}"[: inner - 1]
+    return [Text.assemble(("╭" + "─" * (w - 4 - len(t)), "rule"), (t, "band"), ("──╮", "rule")),
+            Text.assemble(("│ ", "rule"), (body, "prompt"), " " * (inner - 1 - len(body)), ("│", "rule")),
+            Text("╰" + "─" * inner + "╯", style="rule")]
+
+
+class PromptEcho:
+    """The accepted frame as a renderable: drawn at the console's width each time it is printed, so the
+    repaint after a resize fits the new width instead of re-wrapping a fixed line."""
+
+    def __init__(self, tag: str, text: str) -> None:
+        self.tag, self.text = tag, text
+
+    def __rich_console__(self, console, options):
+        yield from prompt_box(self.tag, self.text, max(40, options.max_width))
+
+
+def session_rule(tag: str, w: int = DESIGN_WIDTH) -> Text:
+    """The top rule of the prompt frame alone."""
+    return prompt_box(tag, "", w)[0]
 
 
 def toolbar(left: str, right: str, w: int) -> list[tuple[str, str]]:

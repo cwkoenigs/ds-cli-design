@@ -41,8 +41,9 @@ def main() -> None:
     out.print(S.hint("make sync ZIP=<export.zip> brings in a new export"))
     out.print()
 
-    # 3. an agent's turn: you, the agent on one rail, a tool call, its folded result, the footer
-    out.print(S.you("which repo serves the billing site?"))
+    # 3. an agent's turn: the box you typed in, kept in the scrollback; the agent on one rail, a tool
+    #    call, its folded result, the footer
+    out.print(S.PromptEcho("New session", "which repo serves the billing site?"))
     S.agent_lines(out, Markdown("Two Vercel projects build from **one repo**; checking which root each uses."))
     out.print(S.run("vercel", "project inspect ringneck-billing"))
     out.print(S.result("Root Directory  site/ringneck-billing", more=14))

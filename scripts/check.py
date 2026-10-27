@@ -66,6 +66,14 @@ for name, value in (("cols", S.DESIGN_WIDTH), ("indent", S.INDENT), ("resultInde
 if [r for r in T["mascot"]["grid"]] != S.MASCOT:
     problems.append("mascot: the pixel grid in ui_style differs from tokens.json")
 
+# the frames are exactly the width they are given, at the design width and the narrowest
+for w in (80, 60):
+    rows = S.banner("v1", [("cwd", "~/x")], ["hint"], "~/Developer/canon", "tagline", w=w, name="atlas")
+    if {r.cell_len for r in rows} != {w}:
+        problems.append(f"banner at {w}: rows of {sorted({r.cell_len for r in rows})} cells")
+    if {r.cell_len for r in S.prompt_box("New session", "x" * 200, w)} != {w}:
+        problems.append(f"prompt_box at {w}: not {w} cells wide")
+
 # every colour in tokens.json is also in tokens/colors.css (the CSS mirror)
 css = (ROOT / "design-system" / "tokens" / "colors.css").read_text().lower()
 for theme in ("dark", "light"):

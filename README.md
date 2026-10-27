@@ -48,9 +48,14 @@ The `ds-cli-design` skill has the table of which helper fits which moment and th
 
 ## Changes from the export
 
-The library started as the export's `code/ui_style.py` and `code/widgets.py`. Three fixes, each noted in the file:
+The library started as the export's `code/ui_style.py` and `code/widgets.py`. Since 1.1.0 it also carries
+what ds-next drew on its own, so ds-next imports the look from here instead of keeping a copy:
 
-- `banner()` takes the product name instead of always saying ds-next.
+- `banner()` draws the brighter banner the owner chose: a visible edge, a bright title. It takes the
+  product name and the art instead of always saying ds-next.
+- `prompt_box`, `PromptEcho` and `session_rule` draw Cortex Code's rounded prompt box with the session
+  tag in its top rule.
+- `agent_lines()` prints its text; the export's copy printed `None`, because `Text.rstrip()` works in place (ds-next's live copy already had this fix).
 - `agent_lines()` prints its text; the export's copy printed `None`, because `Text.rstrip()` works in place (ds-next's live copy already had this fix).
 - `pick` and `form` frames keep their width in a terminal wider than 80 columns; in the export they overshoot.
 
