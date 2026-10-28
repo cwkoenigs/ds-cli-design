@@ -6,9 +6,10 @@
 1. Unzips the export (it holds a `final/` folder, or the files at the top level).
 2. Replaces design-system/ with it (code/ goes to examples/ds-next/, SKILL.md to SKILL.upstream.md).
 3. Prints every token that was added, removed or changed since the last sync.
-4. Runs the check. When it fails, the tokens moved: update src/ds_cli_design/ui_style.py by hand
-   (PALETTE, G, grid constants, MASCOT) until `make check` passes. That file mirrors tokens.json;
-   nothing else holds a value.
+4. Runs the check against the canon. When it fails, the tokens moved: update the canon's
+   blocks/block-ui-style/code/ui_style.py by hand (PALETTE, G, grid constants, MASCOT) until
+   `make check` passes. That file mirrors tokens.json; nothing else holds a value. The
+   ds-cli-design-sync skill walks through it, and through releasing canon-lib.
 """
 import json
 import pathlib
@@ -61,9 +62,9 @@ def main():
         print(f"  {'+' if a is None else '-' if b is None else '~'} {k}: {a!r} -> {b!r}")
     if not changed:
         print("  tokens unchanged")
-    r = subprocess.run(["uv", "run", "--quiet", "python", str(ROOT / "scripts" / "check.py")], cwd=ROOT)
+    r = subprocess.run(["make", "-C", str(ROOT), "--no-print-directory", "check"])
     if r.returncode:
-        print("\nthe tokens moved: mirror them in src/ds_cli_design/ui_style.py, then `make check`")
+        print("\nthe tokens moved: mirror them in the canon's blocks/block-ui-style/code/ui_style.py, then `make check`")
     sys.exit(r.returncode)
 
 

@@ -1,26 +1,33 @@
 #!/usr/bin/env python3
-"""Check that the Python library says what design-system/tokens.json says.
+"""Check that the canon's terminal code says what design-system/tokens.json says.
 
-tokens.json is the design system's machine-readable source. ui_style.py mirrors it by hand (the
-upstream SYNC.md says so), so this check is what keeps the two from drifting: every colour role in
-both themes and the ANSI fallback, every glyph, the grid, and the mascot. Exit 1 on any mismatch.
+tokens.json is the design system's machine-readable source. The canon's block-ui-style
+(blocks/block-ui-style/code/ui_style.py, built into canon-lib as canon_lib.ui_style) mirrors it by
+hand (the upstream SYNC.md says so), so this check is what keeps the two from drifting: every colour
+role in both themes and the ANSI fallback, every glyph, the grid, the mascot, and frames exact at 80
+and 60 columns. Exit 1 on any mismatch. The canon checkout is $DS_CANON, else ~/Developer/canon.
 
-    python3 scripts/check.py            (or: make check)
+    make check
 """
 import json
+import os
 import pathlib
 import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "src"))
+CANON = pathlib.Path(os.environ.get("DS_CANON") or pathlib.Path.home() / "Developer" / "canon")
+CODE = CANON / "blocks" / "block-ui-style" / "code"
+if not (CODE / "ui_style.py").is_file():
+    sys.exit(f"no canon at {CANON} (blocks/block-ui-style/code/ui_style.py); set DS_CANON=<path>")
+sys.path.insert(0, str(CODE))
 T = json.loads((ROOT / "design-system" / "tokens.json").read_text())
 problems = []
 
 try:
-    from ds_cli_design import ui_style as S
+    import ui_style as S
 except ImportError as e:
-    sys.exit(f"cannot import ds_cli_design ({e}); run with the package's environment: uv run scripts/check.py")
+    sys.exit(f"cannot import the canon's ui_style ({e}); it needs rich: make check")
 
 
 def hexes(style: str) -> list[str]:
@@ -82,7 +89,7 @@ for theme in ("dark", "light"):
             problems.append(f"tokens/colors.css is missing {theme} {role} {v}")
 
 if problems:
-    print("check: FAILED")
+    print(f"check: FAILED against {CODE / 'ui_style.py'}")
     print("\n".join(f"  {p}" for p in problems))
     sys.exit(1)
 print(f"check: ok (tokens {T['version']} of {T['updated']}: 13 roles x 2 themes + ansi16, "
